@@ -3,7 +3,7 @@ from django.http import HttpResponse,Http404
 from .models import Mentorados, Navigators, DisponibilidadeHorarios
 from django.contrib import messages
 from django.contrib.messages import constants
-from datetime import datetime
+from datetime import datetime, timedelta
 # Create your views here.
 def mentorados(request):
     if not request.user.is_authenticated:
@@ -45,8 +45,8 @@ def reunioes(request):
         data = datetime.strptime(data, '%Y-%m-%dT%H:%M')
 
         disponibilidades = DisponibilidadeHorarios.objects.filter(mentor=request.user).filter(
-            data_INICIAL__gte=data,
-            data_INICIAL__lt=data + timedelta(minutes=50)
+            data_INICIAL__gte=(data - timedelta(minutes=50)),
+            data_INICIAL__lte=(data + timedelta(minutes=50))
         )
 
         disponibilidades = DisponibilidadeHorarios(
