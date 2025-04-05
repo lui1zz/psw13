@@ -49,8 +49,15 @@ def reunioes(request):
             data_INICIAL__lte=(data + timedelta(minutes=50))
         )
 
+        if disponibilidades.exists():
+            messages.add_message(request, constants.ERROR, 'Você ja possui uma reunião em aberto!')
+            return redirect('reunioes')
+
         disponibilidades = DisponibilidadeHorarios(
             data_INICIAL=data,
-            mentor=request.user
+            mentor=request.user,
         )
         disponibilidades.save()
+        
+        messages.add_message(request, constants.SUCCESS, 'Horario disponibilizado com sucesso!')
+        return redirect('reunioes')
