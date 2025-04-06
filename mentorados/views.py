@@ -198,3 +198,8 @@ def tarefa_mentorado(request):
         videos = Upload.objects.filter(mentorado=mentorado)
         tarefas = Tarefa.objects.filter(mentorado=mentorado)
         return render(request, 'tarefa_mentorado.html', {'mentorado': mentorado, 'videos': videos, 'tarefas': tarefas})
+    
+def tarefa_alterar(request, id):
+    mentorado = Mentorados.objects.get(id=id)
+    if mentorado.user != request.user:
+        raise Http404()
