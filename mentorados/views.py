@@ -7,13 +7,14 @@ from datetime import datetime, timedelta
 from .auth import valida_token
 import locale
 from django.shortcuts import render
-
-
+from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponseNotAllowed
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
+@login_required
 def mentorados(request):
-    if not request.user.is_authenticated:
-        return redirect('login')
+
     if request.method == 'GET':
         navigators = Navigators.objects.filter(user=request.user)
         mentorados = Mentorados.objects.filter(user=request.user)
@@ -43,6 +44,7 @@ def mentorados(request):
         messages.add_message(request, constants.SUCCESS, 'Mentorado cadastrado com sucesso!')
         return redirect('mentorados')
 
+@login_required
 def reunioes(request):
     if request.method == 'GET':
         reunioes = Reuniao.objects.filter(data__mentor=request.user)
@@ -68,6 +70,8 @@ def reunioes(request):
 
         messages.add_message(request, constants.SUCCESS, 'Horario disponibilizado com sucesso!')
         return redirect('reunioes')
+
+
 
 def auth(request):
     if request.method == 'GET':
@@ -154,6 +158,7 @@ def agendar_reuniao(request):
         messages.add_message(request, constants.SUCCESS, 'Reunião agendada com sucesso!')
         return redirect('escolher_dia')
 
+@login_required
 def tarefa(request, id):
     mentorado = Mentorados.objects.get(id=id)
     if mentorado.user != request.user:
@@ -174,7 +179,7 @@ def tarefa(request, id):
         t.save()
         return redirect('tarefa', id=mentorado.id)
     
-
+@login_required
 def upload(request, id):
     mentorado = Mentorados.objects.get(id=id)
     if mentorado.user != request.user:
@@ -198,8 +203,24 @@ def tarefa_mentorado(request):
         videos = Upload.objects.filter(mentorado=mentorado)
         tarefas = Tarefa.objects.filter(mentorado=mentorado)
         return render(request, 'tarefa_mentorado.html', {'mentorado': mentorado, 'videos': videos, 'tarefas': tarefas})
-    
+
+
+
+
+@csrf_exempt
+@login_required
 def tarefa_alterar(request, id):
-    mentorado = Mentorados.objects.get(id=id)
-    if mentorado.user != request.user:
-        raise Http404()
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
+    try:
+        tarefa = Tarefa.objects.get(id=id)
+    except Tarefa.DoesNotExist:
+        return HttpResponse('Tarefa não encontrada', status=404)
+
+    tarefa.realizada = not tarefa.realizada
+    tarefa.save()
+    return HttpResponse('Tarefa atualizada')
+    
+    
+    
